@@ -2,6 +2,7 @@
 
 require('dotenv').config()
 const { google } = require('googleapis');
+const fs = require("fs");
 
 const youtube = google.youtube({
     version: 'v3',
@@ -26,6 +27,7 @@ async function getVideos(pageToken) {
 async function getAllVideos(nextPageToken, items, count) {
     const res = await getVideos(nextPageToken)
     const newItems = items.concat(res.videos)
+    // if (count < 1) {
     if (count < res.totalResults / 50) {
         return getAllVideos(res.nextPageToken, newItems, count + 1)
     } else {
@@ -33,9 +35,53 @@ async function getAllVideos(nextPageToken, items, count) {
     }
 }
 
+function getRating(review) {
+    if (review.includes("CLASSIC")) return "CLASSIC/10"
+    if (review.includes("NOT GOOD")) return "NOT GOOD/10"
+    
+    const regex = /[0-9][10]*\/[1][0]/g;
+    const rating = review.match(regex) || "??/??";
+    return rating[0];
+}
+
+function getArtist(review) {
+    if (review.resourceId.videoId === "F-Fd5YG2pWs") return
+    if (review.resourceId.videoId === "MNnibsPJSDY") return
+    if (review.resourceId.videoId === "LDMNhCOs0G0") return
+    
+    const regex = /.*(?=-)/g;
+    const artist = review.title.trim().match(regex);
+    return artist[0].replace(/\s*$/,"");
+}
+
+function getAlbum(review) {
+    if (review.resourceId.videoId === "F-Fd5YG2pWs") return
+    if (review.resourceId.videoId === "MNnibsPJSDY") return
+    if (review.resourceId.videoId === "LDMNhCOs0G0") return
+
+    const regex = /(?<=-).*/g;
+    const album = review.title.trim().match(regex)
+        // .replace("ALBUM REVIEW", "")
+    return album[0].replace(/\s*$/,"");
+}
+
 (async function () {
     const allVideos = await Promise.resolve(getAllVideos("", [], 0));
     const albumReviews = allVideos.flatMap(v => v.snippet.title.endsWith("ALBUM REVIEW") ?
         [v.snippet] : [])
-    console.log(albumReviews)
+
+    const snippets = albumReviews.map(review => ({
+        date: review.publishedAt.substring(0, 10),
+        url: `youtube.com/watch?v=${review.resourceId.videoId}`,
+        artist: getArtist(review),
+        album: getAlbum(review),
+        rating: getRating(review.description)
+    }))
+
+    // fs.writeFile("reviews.json", JSON.stringify(snippets), function(err){
+    //     if (err){
+    //         console.log(err)
+    //     }
+    // })
+
 })();
