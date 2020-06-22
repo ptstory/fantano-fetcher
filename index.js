@@ -54,6 +54,25 @@ function getArtist(review) {
     return artist[0].replace(/\s*$/,"");
 }
 
+function getGenres(review) {
+    const noUrls = review.replace(/(?:https?):\/\/[\n\S]+/g, '');
+
+    let genres = noUrls.substring(
+        noUrls.lastIndexOf('/', noUrls.lastIndexOf('/')-1) + 1,
+        noUrls.lastIndexOf('/') - 1
+    ).trim().split(",").map(genre => genre.replace(/^\s+/g, ''))
+    
+    if (genres[0].includes("Listen: ")) return []
+
+    let genres = noUrls.substring(
+        noUrls.lastIndexOf("/")
+    )
+    //Need some way to handle between 2011-06-28 and 2012-01-06
+    //Need to handle pre 2011 (probably just no genre)
+
+    return genres
+}
+
 function getAlbum(review) {
     if (review.resourceId.videoId === "F-Fd5YG2pWs") return
     if (review.resourceId.videoId === "MNnibsPJSDY") return
@@ -75,8 +94,9 @@ function getAlbum(review) {
         url: `youtube.com/watch?v=${review.resourceId.videoId}`,
         artist: getArtist(review),
         album: getAlbum(review),
-        rating: getRating(review.description)
-    }))
+        rating: getRating(review.description),
+        genres: getGenres(review.description)
+    })).sort((a, b) => new Date(b.date) - new Date(a.date))
 
     // fs.writeFile("reviews.json", JSON.stringify(snippets), function(err){
     //     if (err){
