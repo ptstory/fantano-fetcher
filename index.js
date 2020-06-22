@@ -4,6 +4,10 @@ require('dotenv').config()
 const { google } = require('googleapis');
 const fs = require("fs");
 
+//Start and End Dates for specific genre format
+const fromDate = new Date("2011-06-28")
+const toDate = new Date("2012-01-06")
+
 const youtube = google.youtube({
     version: 'v3',
     auth: process.env.API_KEY,
@@ -55,19 +59,26 @@ function getArtist(review) {
 }
 
 function getGenres(review) {
-    const noUrls = review.replace(/(?:https?):\/\/[\n\S]+/g, '');
-
-    let genres = noUrls.substring(
-        noUrls.lastIndexOf('/', noUrls.lastIndexOf('/')-1) + 1,
-        noUrls.lastIndexOf('/') - 1
-    ).trim().split(",").map(genre => genre.replace(/^\s+/g, ''))
+    const formattedDesc = review.description.replace(/(?:https?):\/\/[\n\S]+/g, '')
+    .replace('(THIS VIDEO IS A REUPLOAD. THE ORIGINAL HAD AN EDITING MISTAKE I WANTED TO FIX)', "");
+    const reviewDate = new Date(review.publishedAt.substring(0, 10))
     
-    if (genres[0].includes("Listen: ")) return []
+    if (reviewDate <= toDate) {
+        if (reviewDate >= fromDate) {
+            return formattedDesc.substring(
+                formattedDesc.lastIndexOf('/'),
+                formattedDesc.length
+            ).split(",").map(genre => genre.replace(/^\s+/g, ''))
+        }
+        return []
+    }
 
-    //Need some way to handle between 2011-06-28 and 2012-01-06
-    //Need to handle pre 2011 (probably just no genre)
+    let genres = formattedDesc.substring(
+        formattedDesc.lastIndexOf('/', formattedDesc.lastIndexOf('/')-1) + 1,
+        formattedDesc.lastIndexOf('/') - 1
+    ).trim().split(",").map(genre => genre.replace(/^\s+/g, ''))
 
-    return genres
+    return genres[0].includes("Listen: ") ? genres : []
 }
 
 function getAlbum(review) {
@@ -92,7 +103,7 @@ function getAlbum(review) {
         artist: getArtist(review),
         album: getAlbum(review),
         rating: getRating(review.description),
-        genres: getGenres(review.description)
+        genres: getGenres(review)
     })).sort((a, b) => new Date(b.date) - new Date(a.date))
 
     // fs.writeFile("reviews.json", JSON.stringify(snippets), function(err){
