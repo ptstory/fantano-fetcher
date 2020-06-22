@@ -1,83 +1,11 @@
-// "use strict"
-
-// require('dotenv').config()
-import * as dotenv from "dotenv";
-dotenv.config();
-
-// const { google } = require('googleapis');
 import { google, youtube_v3 } from 'googleapis';
-
-// const fs = require("fs");
-import fs from 'fs';
-
-const youtube = google.youtube({
-    version: 'v3',
-    auth: process.env.API_KEY,
-});
+import * as fs from 'fs';
+import * as dotenv from 'dotenv';
 
 interface PlayListResponse {
     totalResults: number,
-    videos: string,
+    videos: youtube_v3.Schema$PlaylistItem[],
     nextPageToken: string
-}
-
-async function getVideos(pageToken: string) {
-    const params: youtube_v3.Params$Resource$Playlistitems$List = {
-        playlistId: "UUt7fwAhXDy3oNFTAzF2o8Pw",
-        part: ['snippet'],
-        maxResults: 50,
-        pageToken
-    }
-    const res = await youtube.playlistItems.list(params)
-    if (!res.data.pageInfo) return
-    return {
-        totalResults: res.data.pageInfo.totalResults,
-        videos: res.data.items,
-        nextPageToken: res.data.nextPageToken
-    }
-}
-
-async function getAllVideos(nextPageToken: string, items: youtube_v3.Schema$PlaylistItem[], count: number): Promise<string[]> {
-    const res = await getVideos(nextPageToken)
-    if (!res) return
-    const newItems = items.concat(res.videos)
-    console.log('newItems', newItems)
-    if (count < 1) {
-        // if (count < res.totalResults / 50) {
-        return getAllVideos(res.nextPageToken = "", newItems, count + 1)
-    } else {
-        return newItems
-    }
-}
-
-function getRating(review): string {
-    if (review.includes("CLASSIC")) return "CLASSIC/10"
-    if (review.includes("NOT GOOD")) return "NOT GOOD/10"
-
-    const regex = /[0-9][10]*\/[1][0]/g;
-    const rating = review.match(regex) || "??/??";
-    return rating[0];
-}
-
-function getArtist(review): string {
-    if (review.resourceId.videoId === "F-Fd5YG2pWs") return
-    if (review.resourceId.videoId === "MNnibsPJSDY") return
-    if (review.resourceId.videoId === "LDMNhCOs0G0") return
-
-    const regex = /.*(?=-)/g;
-    const artist = review.title.trim().match(regex);
-    return artist[0].replace(/\s*$/, "");
-}
-
-function getAlbum(review): string {
-    if (review.resourceId.videoId === "F-Fd5YG2pWs") return
-    if (review.resourceId.videoId === "MNnibsPJSDY") return
-    if (review.resourceId.videoId === "LDMNhCOs0G0") return
-
-    const regex = /(?<=-).*/g;
-    const album = review.title.trim().match(regex)
-    // .replace("ALBUM REVIEW", "")
-    return album[0].replace(/\s*$/, "");
 }
 
 interface Review {
@@ -88,23 +16,95 @@ interface Review {
     rating: string
 }
 
-(async function () {
-    const allVideos = await Promise.resolve(getAllVideos("", [], 0));
-    const albumReviews = allVideos.flatMap(v => v.snippet.title.endsWith("ALBUM REVIEW") ?
-        [v.snippet] : [])
+dotenv.config();
+const youtube = google.youtube({
+    version: 'v3',
+    auth: process.env.API_KEY,
+});
 
-    const snippets = albumReviews.map(review => ({
-        date: review.publishedAt.substring(0, 10),
-        url: `youtube.com/watch?v=${review.resourceId.videoId}`,
-        artist: getArtist(review),
-        album: getAlbum(review),
-        rating: getRating(review.description)
-    }))
+(async () => {
+    const allVideos = await Promise.resolve(getAllVideos('', [], 0));
+    const albumReviews = allVideos.filter(v => v?.snippet?.title?.endsWith('ALBUM REVIEW'))
+        .map(v => v.snippet)
+        .filter(isPresent);
 
-    fs.writeFile("reviews.json", JSON.stringify(snippets), function (err) {
+    const snippets = albumReviews.filter(r => !!r).map(review => (
+        {
+            date: review.publishedAt?.substring(0, 10),
+            url: `youtube.com/watch?v=${review.resourceId?.videoId}`,
+            artist: getArtist(review),
+            album: getAlbum(review),
+            rating: getRating(review.description || '')
+        } as Review
+    ));
+
+    fs.writeFile('reviews.json', JSON.stringify(snippets), (err) => {
         if (err) {
+            // tslint:disable-next-line
             console.log(err)
         }
-    })
+    });
 
 })();
+
+async function getVideos(pageToken: string) : Promise<PlayListResponse> {
+    const params: youtube_v3.Params$Resource$Playlistitems$List = {
+        playlistId: 'UUt7fwAhXDy3oNFTAzF2o8Pw',
+        part: ['snippet'],
+        maxResults: 50,
+        pageToken
+    };
+    const res = await youtube.playlistItems.list(params);
+    if (!res.data.pageInfo) return {} as PlayListResponse;
+    return {
+        totalResults: res.data.pageInfo.totalResults as number,
+        videos: res.data.items as youtube_v3.Schema$PlaylistItem[],
+        nextPageToken: res.data.nextPageToken as string
+    };
+}
+
+async function getAllVideos(nextPageToken: string, items: youtube_v3.Schema$PlaylistItem[], count: number)
+        : Promise<youtube_v3.Schema$PlaylistItem[]> {
+    const res = await getVideos(nextPageToken);
+    if (!res) return [];
+    const newItems = items.concat(res.videos);
+    if (count < 1) {
+        // if (count < res.totalResults / 50) {
+        return getAllVideos(res.nextPageToken = '', newItems, count + 1);
+    } else {
+        return newItems;
+    }
+}
+
+function getRating(review: string): string {
+    if (review.includes('CLASSIC')) return 'CLASSIC/10';
+    if (review.includes('NOT GOOD')) return 'NOT GOOD/10';
+
+    const regex = /[0-9][10]*\/[1][0]/g;
+    const rating = review.match(regex) || '??/??';
+    return rating[0];
+}
+
+function getArtist(review: youtube_v3.Schema$PlaylistItemSnippet): string {
+    return getRegexGroupFromTitle(review, /.*(?=-)/g);
+}
+
+function getAlbum(review: youtube_v3.Schema$PlaylistItemSnippet): string {
+    return getRegexGroupFromTitle(review, /(?<=-).*/g);
+}
+
+function shouldIgnoreReview(review: youtube_v3.Schema$PlaylistItemSnippet) : boolean {
+    if (!review || !review?.resourceId?.videoId) return true;
+    return ['F-Fd5YG2pWs', 'MNnibsPJSDY', 'LDMNhCOs0G0'].includes(review.resourceId.videoId);
+}
+
+function isPresent<T>(t: T | undefined | null | void): t is T {
+    return !!t;
+}
+
+function getRegexGroupFromTitle(review: youtube_v3.Schema$PlaylistItemSnippet, regex: RegExp): string {
+    if (shouldIgnoreReview(review)) return '';
+
+    const captureGroup = (review?.title || '').trim().match(regex);
+    return captureGroup ? captureGroup[0].replace(/\s*$/, '') : '';
+}
