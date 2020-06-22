@@ -64,9 +64,6 @@ function getGenres(review) {
     
     if (genres[0].includes("Listen: ")) return []
 
-    let genres = noUrls.substring(
-        noUrls.lastIndexOf("/")
-    )
     //Need some way to handle between 2011-06-28 and 2012-01-06
     //Need to handle pre 2011 (probably just no genre)
 
