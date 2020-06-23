@@ -4,6 +4,7 @@ import { PlayListResponse } from '../interfaces/play-list-response.interface';
 
 export class YoutubeService {
   private youtubeApi: youtube_v3.Youtube;
+  private readonly pageSize = 50;
 
   constructor() {
     dotenv.config();
@@ -15,22 +16,22 @@ export class YoutubeService {
 
   async getAllVideos(nextPageToken: string, items: youtube_v3.Schema$PlaylistItem[], count: number)
       : Promise<youtube_v3.Schema$PlaylistItem[]> {
-    const res = await this.getVideos(nextPageToken);
+    let res = await this.getVideos(nextPageToken);
     if (!res) return [];
-    const newItems = items.concat(res.videos);
-    if (count < 1) {
-      // if (count < res.totalResults / 50) {
-      return this.getAllVideos(res.nextPageToken = '', newItems, count + 1);
-    } else {
-      return newItems;
+    let newItems = items.concat(res.videos);
+    while (res.videos.length === this.pageSize) {
+      res = await this.getVideos(res.nextPageToken);
+      newItems = newItems.concat(res.videos);
+      count++;
     }
+    return newItems;
   }
 
   async getVideos(pageToken: string): Promise<PlayListResponse> {
     const params: youtube_v3.Params$Resource$Playlistitems$List = {
         playlistId: 'UUt7fwAhXDy3oNFTAzF2o8Pw',
         part: ['snippet'],
-        maxResults: 50,
+        maxResults: this.pageSize,
         pageToken
     };
     const res = await this.youtubeApi.playlistItems.list(params);

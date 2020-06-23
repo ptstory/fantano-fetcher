@@ -1,5 +1,6 @@
 import { youtube_v3 } from 'googleapis';
 import { Review } from '../interfaces/review.interface';
+import { isPresent } from '../filters/is-present.filter';
 
 export class ReviewConverter {
   // Start and End Dates for specific genre format
@@ -71,6 +72,7 @@ export class ReviewConverter {
     return formattedDesc
         .substring(formattedDesc.lastIndexOf('/', lastIndexOfForwardSlash - 1) + 1, lastIndexOfForwardSlash - 1)
         .split(',')
-        .map(genre => genre.trim());
+        .map(genre => genre.trim())
+        .filter(isPresent);
   }
 }
