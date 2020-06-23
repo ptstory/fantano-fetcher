@@ -6,7 +6,8 @@
     "jsRules": {},
     "rules": {
         "max-line-length": [true, 120],
-        "semicolon": [true, "always", "ignore-interfaces"]
+        "semicolon": [true, "always", "ignore-interfaces"],
+        "eofline": true
     },
     "rulesDirectory": []
 }
