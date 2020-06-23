@@ -13,7 +13,8 @@ interface Review {
     url: string,
     artist: string,
     album: string,
-    rating: string
+    rating: string,
+    genres: string[]
 }
 
 dotenv.config();
@@ -21,6 +22,10 @@ const youtube = google.youtube({
     version: 'v3',
     auth: process.env.API_KEY,
 });
+
+//Start and End Dates for specific genre format
+const fromDate = new Date('2011-06-28');
+const toDate = new Date('2012-01-06');
 
 (async () => {
     const allVideos = await Promise.resolve(getAllVideos('', [], 0));
@@ -34,7 +39,8 @@ const youtube = google.youtube({
             url: `youtube.com/watch?v=${review.resourceId?.videoId}`,
             artist: getArtist(review),
             album: getAlbum(review),
-            rating: getRating(review.description || '')
+            rating: getRating(review.description || ''),
+            genres: getGenres(review)
         } as Review
     ));
 
@@ -90,7 +96,7 @@ function getArtist(review: youtube_v3.Schema$PlaylistItemSnippet): string {
 }
 
 function getAlbum(review: youtube_v3.Schema$PlaylistItemSnippet): string {
-    return getRegexGroupFromTitle(review, /(?<=-).*/g);
+    return getRegexGroupFromTitle(review, /(?<=-).*/g).replace(/\s+ALBUM REVIEW\s*/, '');
 }
 
 function shouldIgnoreReview(review: youtube_v3.Schema$PlaylistItemSnippet) : boolean {
@@ -107,4 +113,29 @@ function getRegexGroupFromTitle(review: youtube_v3.Schema$PlaylistItemSnippet, r
 
     const captureGroup = (review?.title || '').trim().match(regex);
     return captureGroup ? captureGroup[0].replace(/\s*$/, '') : '';
+}
+
+function getGenres(review: youtube_v3.Schema$PlaylistItemSnippet) : string[] {
+    if (!review?.description || !review?.publishedAt) {
+        return [];
+    }
+
+    const formattedDesc = review.description.replace(/(?:https?):\/\/[\n\S]+/g, '')
+        .replace('(THIS VIDEO IS A REUPLOAD. THE ORIGINAL HAD AN EDITING MISTAKE I WANTED TO FIX)', '');
+    const reviewDate = new Date(review.publishedAt.substring(0, 10));
+
+    const lastIndexOfForwardSlash = formattedDesc.lastIndexOf('/');
+    if (reviewDate <= toDate) {
+        if (reviewDate >= fromDate) {
+            return formattedDesc.substring(lastIndexOfForwardSlash, formattedDesc.length)
+                .split(',')
+                .map(genre => genre.replace(/^\s+/g, ''));
+        }
+        return [];
+    }
+
+    return formattedDesc
+        .substring(formattedDesc.lastIndexOf('/', lastIndexOfForwardSlash - 1) + 1, lastIndexOfForwardSlash - 1)
+        .split(',')
+        .map(genre => genre.trim());
 }
