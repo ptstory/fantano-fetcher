@@ -8,7 +8,7 @@ export class App {
     private youtubeService = new YoutubeService();
 
     async run(): Promise<void> {
-        const allVideos = await Promise.resolve(this.youtubeService.getAllVideos('', [], 0));
+        const allVideos = await Promise.resolve(this.youtubeService.getAllVideos());
         const albumReviews = allVideos.filter(v => v?.snippet?.title?.endsWith('ALBUM REVIEW'))
             .map(v => v.snippet)
             .filter(isPresent);

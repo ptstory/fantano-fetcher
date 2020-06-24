@@ -8,9 +8,9 @@ export class ReviewConverter {
   private static readonly toDate = new Date('2012-01-06');
 
   static convertToReview(playlistItemSnippet: youtube_v3.Schema$PlaylistItemSnippet): Review {
-    return  {
-      date: playlistItemSnippet.publishedAt?.substring(0, 10),
-      url: `youtube.com/watch?v=${playlistItemSnippet.resourceId?.videoId}`,
+    return {
+      date: ReviewConverter.getDate(playlistItemSnippet),
+      url:  ReviewConverter.getUrl(playlistItemSnippet),
       artist: ReviewConverter.getArtist(playlistItemSnippet),
       album: ReviewConverter.getAlbum(playlistItemSnippet),
       rating: ReviewConverter.getRating(playlistItemSnippet.description || ''),
@@ -18,13 +18,21 @@ export class ReviewConverter {
     } as Review;
   }
 
+  private static getDate(snippet: youtube_v3.Schema$PlaylistItemSnippet): string {
+    return !!snippet.publishedAt ? snippet.publishedAt.substring(0, 10) : '';
+  }
+
+  private static getUrl(snippet: youtube_v3.Schema$PlaylistItemSnippet): string {
+    return !!snippet?.resourceId?.videoId ? `youtube.com/watch?v=${snippet.resourceId?.videoId}` : '';
+  }
+
   private static getRating(review: string): string {
     if (review.includes('CLASSIC')) return 'CLASSIC/10';
     if (review.includes('NOT GOOD')) return 'NOT GOOD/10';
 
     const regex = /[0-9][10]*\/[1][0]/g;
-    const rating = review.match(regex) || '??/??';
-    return rating[0];
+    const rating = review.match(regex);
+    return rating ? rating[0] : '';
   }
 
   private static getArtist(review: youtube_v3.Schema$PlaylistItemSnippet): string {
@@ -57,20 +65,21 @@ export class ReviewConverter {
 
     const formattedDesc = review.description.replace(/(?:https?):\/\/[\n\S]+/g, '')
         .replace('(THIS VIDEO IS A REUPLOAD. THE ORIGINAL HAD AN EDITING MISTAKE I WANTED TO FIX)', '');
-    const reviewDate = new Date(review.publishedAt.substring(0, 10));
+    const reviewDate = new Date(ReviewConverter.getDate(review));
 
     const lastIndexOfForwardSlash = formattedDesc.lastIndexOf('/');
     if (reviewDate <= this.toDate) {
         if (reviewDate >= this.fromDate) {
-            return formattedDesc.substring(lastIndexOfForwardSlash, formattedDesc.length)
+            return formattedDesc.substring(lastIndexOfForwardSlash + 1, formattedDesc.length)
                 .split(',')
                 .map(genre => genre.replace(/^\s+/g, ''));
         }
         return [];
     }
 
+    const positionOfScore = formattedDesc.search(/\n.*\/10/);
     return formattedDesc
-        .substring(formattedDesc.lastIndexOf('/', lastIndexOfForwardSlash - 1) + 1, lastIndexOfForwardSlash - 1)
+        .substring(formattedDesc.lastIndexOf('/', lastIndexOfForwardSlash - 1) + 1, positionOfScore)
         .split(',')
         .map(genre => genre.trim())
         .filter(isPresent);

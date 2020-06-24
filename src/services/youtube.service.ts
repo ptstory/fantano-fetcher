@@ -14,15 +14,14 @@ export class YoutubeService {
     });
   }
 
-  async getAllVideos(nextPageToken: string, items: youtube_v3.Schema$PlaylistItem[], count: number)
+  async getAllVideos(nextPageToken: string = '', items: youtube_v3.Schema$PlaylistItem[] = [])
       : Promise<youtube_v3.Schema$PlaylistItem[]> {
     let res = await this.getVideos(nextPageToken);
-    if (!res) return [];
+    if (!res?.videos) return [];
     let newItems = items.concat(res.videos);
     while (res.videos.length === this.pageSize) {
       res = await this.getVideos(res.nextPageToken);
       newItems = newItems.concat(res.videos);
-      count++;
     }
     return newItems;
   }
