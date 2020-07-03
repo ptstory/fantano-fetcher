@@ -1,4 +1,4 @@
-import Mongoose = require('mongoose');
+import Mongoose from "mongoose";
 import { ReviewModel } from './reviews/reviews.model';
 
 let database: Mongoose.Connection;
