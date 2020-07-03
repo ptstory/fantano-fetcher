@@ -4,5 +4,6 @@ export interface Review {
   artist: string,
   album: string,
   rating: string,
-  genres: string[]
+  genres: string[],
+  dateOfEntry?: Date;
 }
