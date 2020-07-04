@@ -1,7 +1,7 @@
 import { youtube_v3 } from 'googleapis';
 
-export interface PlayListResponse {
+export interface ActivityListResponse {
     totalResults: number,
-    videos: youtube_v3.Schema$PlaylistItem[],
+    items: youtube_v3.Schema$ActivityListResponse[],
     nextPageToken: string
 }
