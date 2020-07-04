@@ -3,6 +3,9 @@ import { isPresent } from './filters/is-present.filter';
 import { ReviewConverter } from './converters/review.converter';
 import { connect, disconnect } from './database/database';
 import { ReviewModel } from './database/reviews/reviews.model';
+import { logger } from './utils/logger';
+
+
 
 export class App {
     // Switch over to DI
@@ -28,15 +31,13 @@ export class App {
             for (const snippet of snippets) {
                 if (new Date(snippet.date).getTime() > lastDateAdded!) {
                     await ReviewModel.create(snippet);
-                    /* tslint:disable-next-line */
-                    console.log(`Created review ${snippet.artist} ${snippet.album}`);
+                    logger.info(`Created review ${snippet.artist} ${snippet.album}`);
                 }
             }
 
             disconnect();
-        } catch (e) {
-            /* tslint:disable-next-line */
-            console.log(e);
+        } catch (err) {
+            logger.error(err);
         }
     }
 }

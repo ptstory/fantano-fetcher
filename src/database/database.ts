@@ -1,4 +1,5 @@
 import Mongoose from 'mongoose';
+import { logger } from '../utils/logger';
 import { ReviewModel } from './reviews/reviews.model';
 
 let database: Mongoose.Connection;
@@ -20,13 +21,11 @@ export const connect = () => {
   database = Mongoose.connection;
 
   database.once('open', async () => {
-    /* tslint:disable-next-line */
-    console.log('Connected to database');
+    logger.info('Connected to database');
   });
 
   database.on('error', () => {
-    /* tslint:disable-next-line */
-    console.log('Error connecting to database');
+    logger.error('Error connecting to database');
   });
 
   return {
