@@ -19,6 +19,7 @@ export class App {
             .map(ReviewConverter.convertToReview)
             .sort((a, b) => (a.date < b.date) ? 1 : -1);
 
+        this.mongoDBService.connectDB();
         this.mongoDBService.populateDB(snippets);
     }
 }

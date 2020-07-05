@@ -21,6 +21,7 @@ describe('App', () => {
     app = new App();
 
     spyOn((app as any).youtubeService, 'getAllVideos').and.returnValue([playlistItem]);
+    // spyOn((app as any).mongoDBService, 'populateDB');
     spyOn(ReviewConverter, 'convertToReview').and.returnValue(review);
   });
 
@@ -28,17 +29,7 @@ describe('App', () => {
     await app.run();
 
     expect((app as any).youtubeService.getAllVideos).toHaveBeenCalled();
+    // expect((app as any).mongoDBService.populateDB).toHaveBeenCalled();
     expect(ReviewConverter.convertToReview).toHaveBeenCalled();
-  });
-
-  it('tests error with async/await', async () => {
-    // expect.assertions(1);
-    try {
-      await app.run();
-    } catch (e) {
-      expect(e).toEqual({
-        error: 'User with 1 not found.',
-      });
-    }
   });
 });
