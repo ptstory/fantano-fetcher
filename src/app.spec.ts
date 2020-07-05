@@ -30,4 +30,15 @@ describe('App', () => {
     expect((app as any).youtubeService.getAllVideos).toHaveBeenCalled();
     expect(ReviewConverter.convertToReview).toHaveBeenCalled();
   });
+
+  it('tests error with async/await', async () => {
+    // expect.assertions(1);
+    try {
+      await app.run();
+    } catch (e) {
+      expect(e).toEqual({
+        error: 'User with 1 not found.',
+      });
+    }
+  });
 });
