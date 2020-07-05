@@ -2,31 +2,23 @@ import Mongoose from 'mongoose';
 import { logger } from '../utils/logger';
 import { ReviewModel } from './reviews/reviews.model';
 
-let database: Mongoose.Connection;
+export const callback = (err?: Error) => {
+  if (err) {
+    logger.error(err.message);
+  } else {
+    logger.info('Connected to database');
+  }
+};
 
 export const connect = () => {
   const uri = process.env.MONGODB_URI;
-
-  if (database) {
-    return;
-  }
 
   Mongoose.connect(uri!, {
     useNewUrlParser: true,
     useFindAndModify: true,
     useUnifiedTopology: true,
     useCreateIndex: true,
-  });
-
-  database = Mongoose.connection;
-
-  database.once('open', async () => {
-    logger.info('Connected to database');
-  });
-
-  database.on('error', () => {
-    logger.error('Error connecting to database');
-  });
+  }, callback);
 
   return {
     ReviewModel,
@@ -34,9 +26,5 @@ export const connect = () => {
 };
 
 export const disconnect = () => {
-  if (!database) {
-    return;
-  }
-
   Mongoose.disconnect();
 };

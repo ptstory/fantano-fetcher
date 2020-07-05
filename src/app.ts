@@ -15,8 +15,8 @@ export class App {
 
         connect();
 
-        const lastAddedReview = await ReviewModel.findOne({}).sort({ _id: 1 });
-        const lastDateAdded = lastAddedReview?.dateOfEntry?.getTime();
+        // const lastAddedReview = await ReviewModel.findOne({}).sort({ _id: 1 });
+        // const lastDateAdded = lastAddedReview?.dateOfEntry?.getTime();
 
         const allVideos = await Promise.resolve(this.youtubeService.getAllVideos());
         const albumReviews = allVideos.filter(v => v?.snippet?.title?.endsWith('ALBUM REVIEW'))
@@ -29,10 +29,13 @@ export class App {
 
         try {
             for (const snippet of snippets) {
-                if (new Date(snippet.date).getTime() > lastDateAdded!) {
-                    await ReviewModel.create(snippet);
-                    logger.info(`Created review ${snippet.artist} ${snippet.album}`);
-                }
+                await ReviewModel.create(snippet);
+                logger.info(`Created review ${snippet.artist} ${snippet.album}`);
+                // if (new Date(snippet.date).getTime() > lastDateAdded!) {
+                //     await ReviewModel.create(snippet);
+                //     logger.info(`Created review ${snippet.artist} ${snippet.album}`);
+                // }
+
             }
 
             disconnect();
