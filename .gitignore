@@ -1,3 +1,6 @@
 .env
 node_modules
 reviews.json
+.vscode/
+coverage
+*.log
