@@ -2,6 +2,7 @@ import { connect, disconnect } from '../database/database';
 import { ReviewModel } from '../database/reviews/reviews.model';
 import { Review } from '../interfaces/review.interface';
 import { logger } from '../utils/logger';
+import { SpotifyService } from './spotify.service';
 
 export class MongoDBService {
     // const lastAddedReview = await ReviewModel.findOne({}).sort({ _id: 1 });
@@ -12,10 +13,14 @@ export class MongoDBService {
     }
 
     async populateDB(snippets: Review[]): Promise<void> {
+        const spotify = await SpotifyService.create();
         try {
-            for (const snippet of snippets) {
+            for (let snippet of snippets) {
+                const cover = await Promise.resolve(spotify
+                        .getAlbumCover(snippet.artist, snippet.album));
+                snippet = {...snippet, albumCover: cover};
                 await ReviewModel.create(snippet);
-                logger.info(`Created review ${snippet.artist} ${snippet.album}`);
+                logger.info(`Created review ${snippet.artist} ${snippet.album} ${snippet.albumCover}`);
                 // if (new Date(snippet.date).getTime() > lastDateAdded!) {
                 //     await ReviewModel.create(snippet);
                 //     logger.info(`Created review ${snippet.artist} ${snippet.album}`);

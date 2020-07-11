@@ -10,7 +10,7 @@ export class YoutubeService {
     dotenv.config();
     this.youtubeApi = google.youtube({
         version: 'v3',
-        auth: process.env.API_KEY,
+        auth: process.env.YOUTUBE_API_KEY,
     });
   }
 

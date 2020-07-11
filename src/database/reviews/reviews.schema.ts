@@ -10,6 +10,12 @@ const ReviewSchema = new Mongoose.Schema({
     dateOfEntry: {
         type: Date,
         default: new Date(),
+    },
+    albumCover: {
+        type: String,
+        trim: true,
+        default: 'https://i2.wp.com/www.wmhbradio.org/wp-content/uploads/2016/07/albumcover-placeholder.jpg?fit=250%2C250&ssl=1'
+
     }
 });
 
