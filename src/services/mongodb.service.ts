@@ -17,8 +17,8 @@ export class MongoDBService {
         try {
             for (let snippet of snippets) {
                 const cover = await Promise.resolve(spotify
-                        .getAlbumCover(snippet.artist, snippet.album));
-                snippet = {...snippet, albumCover: cover};
+                    .getAlbumCover(snippet.artist, snippet.album));
+                snippet = { ...snippet, albumCover: cover };
                 await ReviewModel.create(snippet);
                 logger.info(`Created review ${snippet.artist} ${snippet.album} ${snippet.albumCover}`);
                 // if (new Date(snippet.date).getTime() > lastDateAdded!) {
@@ -28,8 +28,20 @@ export class MongoDBService {
             }
         } catch (err) {
             logger.error(err);
+            // console.log(err);
         } finally {
             disconnect();
+        }
+    }
+
+    async getReviews(limit = 0, skip = 0, search= {}): Promise<any> {
+        try {
+            const reviews = await ReviewModel.find(search).skip(skip).limit(limit)
+            return reviews;
+        } catch (err) {
+            logger.error(err);
+        } finally {
+            // disconnect();
         }
     }
 }

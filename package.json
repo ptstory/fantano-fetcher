@@ -5,6 +5,7 @@
   "main": "src/index.ts",
   "scripts": {
     "start": "ts-node src/index.ts",
+    "serve": "tsnd --respawn --transpile-only src/index.ts",
     "build": "tsc",
     "test": "jest --coverage",
     "lint": "tslint --fix --project tsconfig.json"
@@ -12,8 +13,13 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@koa/cors": "^3.1.0",
     "dotenv": "8.2.0",
     "googleapis": "52.1.0",
+    "koa": "^2.13.0",
+    "koa-bodyparser": "^4.3.0",
+    "koa-json": "^2.0.2",
+    "koa-router": "^9.1.0",
     "mongoose": "^5.9.21",
     "spotify-web-api-node": "^4.0.0",
     "winston": "^3.3.3"
@@ -22,14 +28,21 @@
     "@babel/preset-env": "7.10.3",
     "@babel/preset-typescript": "^7.10.1",
     "@types/jest": "26.0.0",
+    "@types/koa": "^2.11.3",
+    "@types/koa-bodyparser": "^4.3.0",
+    "@types/koa-json": "^2.0.18",
+    "@types/koa-router": "^7.4.1",
+    "@types/koa__cors": "^3.0.1",
     "@types/mongoose": "^5.7.29",
     "@types/node": "14.0.13",
     "@types/spotify-web-api-node": "^4.0.1",
     "babel-jest": "^26.1.0",
     "jest": "26.1.0",
+    "koa-mongo": "^1.9.1",
     "mongodb-memory-server": "^6.6.1",
     "ts-jest": "26.1.1",
     "ts-node": "8.10.2",
+    "ts-node-dev": "^1.0.0-pre.52",
     "tslint": "6.1.2",
     "typescript": "3.9.5"
   },

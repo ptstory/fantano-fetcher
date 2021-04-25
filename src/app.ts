@@ -3,6 +3,8 @@ import { isPresent } from './filters/is-present.filter';
 import { ReviewConverter } from './converters/review.converter';
 import { MongoDBService } from './services/mongodb.service';
 
+import  Server  from './server';
+
 export class App {
     // Switch over to DI
     private youtubeService = new YoutubeService();
@@ -21,6 +23,10 @@ export class App {
 
         this.mongoDBService.connectDB();
         this.mongoDBService.populateDB(snippets);
+    }
+
+    async startServer(): Promise<void> {
+        Server.listen();
     }
 }
 
